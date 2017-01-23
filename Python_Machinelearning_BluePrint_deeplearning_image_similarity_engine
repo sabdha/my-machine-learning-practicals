@@ -1,0 +1,58 @@
+#Source: PYTHON_MACHINE_LEARNING_BLUEPRINTS
+#chapter 8:Build an Image Similarity Engine
+# to find the image in the set that is the most similar to it. This is
+#an unsupervised task as opposed to a supervised task since we won't be making use of the
+#labels.
+import graphlab as gl
+#canvas pointed to ipython notebook
+gl.canvas.set_target('ipynb')
+#loading set of images from CIFAR-10 dataset
+gl_img = gl.SFrame('http://s3.amazonaws.com/dato-datasets/coursera/deep_learning/image_train_data')
+#notice the column "deep features" extracted from deep learning network
+gl_img
+img = gl.Image('C:/Users/Dell/Anaconda2/blue_print/minion.jpg')
+ppsf = gl.SArray([img])
+ppsf = gl.image_analysis.resize(ppsf, 32,32)
+ppsf.show()
+#including the image in the same frame containing the other trained images.
+ppsf = gl.SFrame(ppsf).rename({'X1': 'image'})
+ppsf
+#extracting deep features of the image
+#ppsf['deep_features']=gl.toolkits.feature_engineering.DeepFeatureExtractor(ppsf)
+#deep_learning_model=gl.deeplearning.create(ppsf, target='image')
+deep_learning_model=gl.load_model('http://s3.amazonaws.com/GraphLab-Datasets/deeplearning/imagenet_model_iter45')
+ppsf['deep_features'] = deep_learning_model.extract_features(ppsf)
+ppsf
+# final touches to get our image on par with the comparison images:
+ppsf['label']='Minion'
+gl_img['id'].max()
+ppsf['id']=50000
+labels = ['id', 'image', 'label', 'deep_features']
+part_train = gl_img[labels]
+#appended the new image training column with other columns
+#and displayed the tail portion of dataset.
+new_train = part_train.append(ppsf[labels])
+new_train.tail()
+#KNN model is used first, to compare one random cat to the others in the set
+#taken features as deep_features and labels as the id(48877...50000)
+knn_model =gl.nearest_neighbors.create(new_train,features=['deep_features'],label='id')
+#test cat
+cat_test = new_train[-2:-1]
+gl.image_analysis.resize(cat_test['image'], 96,96).show()
+#Let's find his doppelgangers
+sim_frame = knn_model.query(cat_test)
+sim_frame
+#cats that matches test cat
+def reveal_my_twin(x):
+ return gl_img.filter_by(x['reference_label'],'id')
+spirit_animal = reveal_my_twin(knn_model.query(cat_test))
+spirit_animal['image'].show()
+#from the tail moving up ..first image(-1)
+minion_test=new_train[-1:]
+gl.image_analysis.resize(minion_test['image'], 96,96).show()
+sim_train=knn_model.query(minion_test)
+sim_train
+def reveal_my_twin(x):
+ return gl_img.filter_by(x['reference_label'],'id')
+spirit_animal = reveal_my_twin(knn_model.query(minion_test))
+gl.image_analysis.resize(spirit_animal['image'][0:1], 96,96).show()
