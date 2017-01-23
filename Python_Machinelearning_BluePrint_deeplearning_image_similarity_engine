@@ -1,4 +1,4 @@
-#Source: PYTHON_MACHINE_LEARNING_BLUEPRINTS
+#Source: PYTHON_MACHINE_LEARNING_BLUEPRINTS By Alexander T Combs
 #chapter 8:Build an Image Similarity Engine
 # to find the image in the set that is the most similar to it. This is
 #an unsupervised task as opposed to a supervised task since we won't be making use of the
